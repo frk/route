@@ -290,6 +290,52 @@ func TestRouterServeHTTP_Param(t *testing.T) {
 	}.Run(t, router)
 }
 
+func TestRouterServeHTTP_MixedStaticParamsSegments(t *testing.T) {
+	//t.Skip()
+	router := routerSetup{
+		{"GET", "/foo/bar", "handler_a"},
+		{"GET", "/fou/bar", "handler_b"},
+		{"GET", "/fou/bus", "handler_c"},
+		{"GET", "/{x}", "handler_d"},
+		{"GET", "/fou/{x}", "handler_e"},
+		{"GET", "/{x}/bar", "handler_f"},
+		{"GET", "/{x}/bat", "handler_g"},
+		{"GET", "/{x}/{y}", "handler_h"},
+	}.Router()
+
+	routerTests{
+		{
+			method: "GET", path: "/foo/bar",
+			handler: "handler_a", code: 200,
+			params: Params{}, pattern: "/foo/bar",
+		}, {
+			method: "GET", path: "/fou/bar",
+			handler: "handler_b", code: 200,
+			params: Params{}, pattern: "/fou/bar",
+		}, {
+			method: "GET", path: "/fou/bus",
+			handler: "handler_c", code: 200,
+			params: Params{}, pattern: "/fou/bus",
+		}, {
+			method: "GET", path: "/abc",
+			handler: "handler_d", code: 200,
+			params: Params{{"x", "abc"}}, pattern: "/{x}",
+		}, {
+			method: "GET", path: "/fox",
+			handler: "handler_d", code: 200,
+			params: Params{{"x", "fox"}}, pattern: "/{x}",
+		}, {
+			method: "GET", path: "/fou/bat",
+			handler: "handler_e", code: 200,
+			params: Params{{"x", "bat"}}, pattern: "/fou/{x}",
+		}, {
+			method: "GET", path: "/fox/bag",
+			handler: "handler_h", code: 200,
+			params: Params{{"x", "fox"}, {"y", "bag"}}, pattern: "/{x}/{y}",
+		},
+	}.Run(t, router)
+}
+
 func TestRouterServeHTTP_CatchAll(t *testing.T) {
 	//t.Skip()
 	router := routerSetup{

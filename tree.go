@@ -181,6 +181,8 @@ func (nd *node) lookup(path string, po Params) (h Handler, ps Params, pat string
 	ps = po[0:0]
 
 	var prev *node
+	var pn, cn *node
+	var pp, cp string
 
 Loop:
 	for {
@@ -195,6 +197,17 @@ Loop:
 				return nil, nil, "", tsrWithoutSlash
 			}
 			return recommend(nd, path)
+		}
+
+		if nd.catchall != nil {
+			pn = nil
+			cn = nd
+			cp = path
+		}
+		if nd.param != nil {
+			cn = nil
+			pn = nd
+			pp = path
 		}
 
 		// static node
@@ -215,57 +228,55 @@ Loop:
 		}
 
 		// parameter node
-		if nd.param != nil {
-			elen := len(nd.edge)
-			if (elen == 0 && nd.param.start == 0) || (elen > 0 && nd.edge[elen-1] == nd.param.start) {
+		if pn != nil {
+			path = pp
+			elen := len(pn.edge)
+			if (elen == 0 && pn.param.start == 0) || (elen > 0 && pn.edge[elen-1] == pn.param.start) {
 				var i int
-				for plen := len(path); i < plen && (path[i] != nd.param.end && path[i] != '/'); i++ {
+				for plen := len(path); i < plen && (path[i] != pn.param.end && path[i] != '/'); i++ {
 				}
 
-				if cap(ps) < int(nd.maxParams) {
-					ps = make(Params, 0, nd.maxParams)
-				}
-				idx := len(ps)
-				ps = ps[:idx+1]
-				ps[idx].key = nd.param.name
-				ps[idx].val = path[:i]
+				ps = append(ps, param{
+					key: pn.param.name,
+					val: path[:i],
+				})
 
 				path = path[i:]
 				if path == "" {
-					if nd.param.handler.isSet {
-						pat = nd.param.pattern
-						h = &nd.param.handler
+					if pn.param.handler.isSet {
+						pat = pn.param.pattern
+						h = &pn.param.handler
 						return
 					}
-					return recommend(nd.param.child, path)
-				} else if nd.param.child == nil {
-					if path == "/" && nd.param.handler.isSet {
+					return recommend(pn.param.child, path)
+				} else if pn.param.child == nil {
+					if path == "/" && pn.param.handler.isSet {
 						return nil, nil, "", tsrWithoutSlash
 					}
 					return nil, nil, "", tsrNone
 				}
 
-				prev = nd
-				nd = nd.param.child
+				prev = pn
+				nd = pn.param.child
+				pn = nil
+				cn = nil
 				continue
 			}
 		}
 
 		// catch-all node
-		if nd.catchall != nil {
-			if cap(ps) < int(nd.maxParams) {
-				ps = make(Params, 0, nd.maxParams)
-			}
-			idx := len(ps)
-			ps = ps[:idx+1]
-			ps[idx].key = nd.catchall.name
-			ps[idx].val = path
+		if cn != nil {
+			path = cp
+			ps = append(ps, param{
+				key: cn.catchall.name,
+				val: path,
+			})
 
-			if !nd.catchall.handler.isSet {
+			if !cn.catchall.handler.isSet {
 				return nil, nil, "", tsrNone
 			}
-			pat = nd.catchall.pattern
-			h = &nd.catchall.handler
+			pat = cn.catchall.pattern
+			h = &cn.catchall.handler
 		}
 
 		break Loop
