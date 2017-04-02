@@ -180,9 +180,13 @@ Loop:
 func (nd *node) lookup(path string, po Params) (h Handler, ps Params, pat string, redir tsr) {
 	ps = po[0:0]
 
-	var prev *node
-	var pn, cn *node
-	var pp, cp string
+	var prev *node // track the previous node
+
+	// Track the last encountered dynamic node as well as the path at the
+	// time of the encouter, to be able to resume the lookup from that
+	// dynamic node when the static lookup is unsuccessful.
+	var dn *node
+	var dp string
 
 Loop:
 	for {
@@ -199,15 +203,16 @@ Loop:
 			return recommend(nd, path)
 		}
 
+		// Track the last encountered dynamic node. The param node has
+		// higher priority so if both are available make sure to handle
+		// the param node second to override the catchall node.
 		if nd.catchall != nil {
-			pn = nil
-			cn = nd
-			cp = path
+			dn = nd
+			dp = path
 		}
 		if nd.param != nil {
-			cn = nil
-			pn = nd
-			pp = path
+			dn = nd
+			dp = path
 		}
 
 		// static node
@@ -228,55 +233,54 @@ Loop:
 		}
 
 		// parameter node
-		if pn != nil {
-			path = pp
-			elen := len(pn.edge)
-			if (elen == 0 && pn.param.start == 0) || (elen > 0 && pn.edge[elen-1] == pn.param.start) {
+		if dn != nil && dn.param != nil {
+			path = dp
+			elen := len(dn.edge)
+			if (elen == 0 && dn.param.start == 0) || (elen > 0 && dn.edge[elen-1] == dn.param.start) {
 				var i int
-				for plen := len(path); i < plen && (path[i] != pn.param.end && path[i] != '/'); i++ {
+				for plen := len(path); i < plen && (path[i] != dn.param.end && path[i] != '/'); i++ {
 				}
 
 				ps = append(ps, param{
-					key: pn.param.name,
+					key: dn.param.name,
 					val: path[:i],
 				})
 
 				path = path[i:]
 				if path == "" {
-					if pn.param.handler.isSet {
-						pat = pn.param.pattern
-						h = &pn.param.handler
+					if dn.param.handler.isSet {
+						pat = dn.param.pattern
+						h = &dn.param.handler
 						return
 					}
-					return recommend(pn.param.child, path)
-				} else if pn.param.child == nil {
-					if path == "/" && pn.param.handler.isSet {
+					return recommend(dn.param.child, path)
+				} else if dn.param.child == nil {
+					if path == "/" && dn.param.handler.isSet {
 						return nil, nil, "", tsrWithoutSlash
 					}
 					return nil, nil, "", tsrNone
 				}
 
-				prev = pn
-				nd = pn.param.child
-				pn = nil
-				cn = nil
+				prev = dn
+				nd = dn.param.child
+				dn = nil
 				continue
 			}
 		}
 
 		// catch-all node
-		if cn != nil {
-			path = cp
+		if dn != nil && dn.catchall != nil {
+			path = dp
 			ps = append(ps, param{
-				key: cn.catchall.name,
+				key: dn.catchall.name,
 				val: path,
 			})
 
-			if !cn.catchall.handler.isSet {
+			if !dn.catchall.handler.isSet {
 				return nil, nil, "", tsrNone
 			}
-			pat = cn.catchall.pattern
-			h = &cn.catchall.handler
+			pat = dn.catchall.pattern
+			h = &dn.catchall.handler
 		}
 
 		break Loop
