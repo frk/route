@@ -1,7 +1,7 @@
 package routeutil
 
 import (
-	"github.com/mkopriva/frk/route"
+	"github.com/frk/route"
 )
 
 type Router struct {

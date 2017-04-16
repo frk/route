@@ -10,8 +10,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/frk/route"
 	"github.com/gin-gonic/gin"
-	"github.com/mkopriva/frk/route"
 	"github.com/pressly/chi"
 )
 
