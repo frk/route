@@ -1,6 +1,7 @@
 package route
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -22,6 +23,27 @@ func (e ErrNoParam) Error() string {
 // the names specified in the pattern during Handler registration e.g. "/posts/{post_id}".
 // Params also provides a number of convenience methods to parse the parameter values into other types.
 type Params []param
+
+// NewParams returns a new Params value constructed from the given key-value pairs.
+// The number of arguments passed to NewParams must be even. Every argument at an
+// odd position represents a key and the argument next to it, at an even position,
+// represents the value associated with that key. If the number of provided arguments
+// is odd, the function will panic.
+func NewParams(kv ...string) (out Params) {
+	if (len(kv) % 2) > 0 {
+		panic(fmt.Sprintf("route.NewParams: invalid number of arguments(%d)", len(kv)))
+	}
+
+	num := len(kv) / 2
+	for i := 0; i < num; i++ {
+		j := i * 2
+
+		key, val := kv[j], kv[j+1]
+
+		out = append(out, param{key: key, val: val})
+	}
+	return out
+}
 
 func (ps Params) get(key string) (string, bool) {
 	for _, p := range ps {

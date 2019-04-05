@@ -27,6 +27,44 @@ func (p paramsTest) check(t *testing.T, i int, got interface{}, err error) {
 	}
 }
 
+func TestNewParams(t *testing.T) {
+	tests := []struct {
+		args      []string
+		want      Params
+		wantPanic bool
+	}{{
+		args: []string{"foo", "123"},
+		want: Params{{"foo", "123"}},
+	}, {
+		args: []string{},
+		want: nil,
+	}, {
+		args: nil,
+		want: nil,
+	}, {
+		args: []string{"foo", "123", "bar", "baz", "aaa", "true", "bbb", "false"},
+		want: Params{{"foo", "123"}, {"bar", "baz"}, {"aaa", "true"}, {"bbb", "false"}},
+	}, {
+		args:      []string{"foo", "123", "bar", "baz", "aaa", "true", "bbb"},
+		wantPanic: true,
+	}}
+
+	for _, tt := range tests {
+		func() {
+			defer func() {
+				if r := recover(); (r != nil) != tt.wantPanic {
+					t.Errorf("wantPanic got %t, want %t", !tt.wantPanic, tt.wantPanic)
+				}
+			}()
+
+			got := NewParams(tt.args...)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf(" got %v, want %v", got, tt.want)
+			}
+		}()
+	}
+}
+
 func TestParamsBool(t *testing.T) {
 	var tests = []paramsTest{
 		// 1, t, T, TRUE, true, True
