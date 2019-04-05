@@ -154,6 +154,7 @@ func TestRouterServeHTTP_Static(t *testing.T) {
 		{"GET", "/foo", "handler_b"},
 		{"GET", "/foo/bar", "handler_c"},
 		{"GET", "/foo/bar/baz", "handler_d"},
+		{"GET", "/merchant", "handler_m"},
 	}.Router()
 
 	routerTests{
@@ -173,6 +174,10 @@ func TestRouterServeHTTP_Static(t *testing.T) {
 			method: "GET", path: "/foo/bar/baz",
 			handler: "handler_d", code: 200,
 			params: Params{}, pattern: "/foo/bar/baz",
+		}, {
+			method: "GET", path: "/merchant",
+			handler: "handler_m", code: 200,
+			params: Params{}, pattern: "/merchant",
 		},
 	}.Run(t, router)
 }
@@ -447,6 +452,51 @@ func TestRouterServeHTTP_NotFound(t *testing.T) {
 		},
 	}.Run(t, router)
 
+}
+
+func TestRouterHandle_MultiMethod(t *testing.T) {
+	//t.Skip()
+	router := routerSetup{
+		{"*", "/foo/bar", "handler_star"},
+		{"GET,PATCH,PUT", "/bar/baz", "handler_multi"},
+	}.Router()
+
+	routerTests{
+		{
+			method: "GET", path: "/foo/bar", handler: "handler_star",
+			code: 200, params: Params{}, pattern: "/foo/bar",
+		}, {
+			method: "PUT", path: "/foo/bar", handler: "handler_star",
+			code: 200, params: Params{}, pattern: "/foo/bar",
+		}, {
+			method: "POST", path: "/foo/bar", handler: "handler_star",
+			code: 200, params: Params{}, pattern: "/foo/bar",
+		}, {
+			method: "PATCH", path: "/foo/bar", handler: "handler_star",
+			code: 200, params: Params{}, pattern: "/foo/bar",
+		}, {
+			method: "DELETE", path: "/foo/bar", handler: "handler_star",
+			code: 200, params: Params{}, pattern: "/foo/bar",
+		},
+
+		//
+		{
+			method: "GET", path: "/bar/baz", handler: "handler_multi",
+			code: 200, params: Params{}, pattern: "/bar/baz",
+		}, {
+			method: "PUT", path: "/bar/baz", handler: "handler_multi",
+			code: 200, params: Params{}, pattern: "/bar/baz",
+		}, {
+			method: "POST", path: "/bar/baz", handler: "",
+			code: 405, params: Params{}, pattern: "/bar/baz",
+		}, {
+			method: "PATCH", path: "/bar/baz", handler: "handler_multi",
+			code: 200, params: Params{}, pattern: "/bar/baz",
+		}, {
+			method: "DELETE", path: "/bar/baz", handler: "",
+			code: 405, params: Params{}, pattern: "/bar/baz",
+		},
+	}.Run(t, router)
 }
 
 func TestRouterHandle_GET(t *testing.T) {
