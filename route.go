@@ -1,3 +1,5 @@
+// The package route provides an HTTP request multiplexer called Router that
+// can be used as an alternative to Go's http.ServeMux.
 package route
 
 import (
