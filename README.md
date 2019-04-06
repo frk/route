@@ -27,7 +27,7 @@ While this package is mostly analoguous to how http.ServeMux works, there is a s
 
 ## Usage
 
-**Basic** HandleFunc.
+**Basics** A GET specific HandleFunc.
 
 ```go
 router.HandleFunc("GET", "/", func(c context.Context, w http.ResponseWriter, r *http.Request) {
@@ -36,7 +36,7 @@ router.HandleFunc("GET", "/", func(c context.Context, w http.ResponseWriter, r *
 ```
 	
 **Handle Multiple Methods** You can pass a list of methods separated by commas to
-allow a specific handler to be called for requests made with any of those methods.
+register the given handler to handle requests made with any one of those methods.
 
 ```go
 router.HandleFunc("GET,POST,DELETE", "/users", func(c context.Context, w http.ResponseWriter, r *http.Request) {
@@ -45,7 +45,7 @@ router.HandleFunc("GET,POST,DELETE", "/users", func(c context.Context, w http.Re
 ```
 
 **Handle Any Method** You can use the "__\*__" as the method argument if you want
-a specific handler to handle requests made with any method.
+the given handler to handle requests made with *any* method.
 
 ```go
 router.HandleFunc("*", "/posts", func(c context.Context, w http.ResponseWriter, r *http.Request) {
@@ -53,10 +53,12 @@ router.HandleFunc("*", "/posts", func(c context.Context, w http.ResponseWriter, 
 })
 ```
 	
-**Handle Parameters (1)** Since the pattern contains parameter segments your handler
-can retrieve the parameter values from the context using the route.GetParams function.
-Individual parameters are retrieved using the "typed" methods of the Params type.
-Check the docs on the Params type for more info.
+**Handle Parameters (1)** You can specify *dynamic segments* in the pattern when
+registering a handler. The router then, during handler resolution, extracts the
+actual values from the request's URL path and stores them all in a `route.Params`
+value inside the `context.Context`. Then the handler can access these values using
+the `route.GetParams` function. Individual parameters are retrieved using the
+"typed" methods of the `Params` type. Check the documentation for more info.
 
 ```go
 router.HandleFunc("GET", "/posts/{post_slug}/comments/{comment_id}", func(c context.Context, w http.ResponseWriter, r *http.Request) {
@@ -71,8 +73,12 @@ router.HandleFunc("GET", "/posts/{post_slug}/comments/{comment_id}", func(c cont
 })
 ```
 
-**Handle Parameters (2)** You can have a parameter segment and a static segment in the
-same part of a pattern without conflict as shown in this and the previous example.
+**Handle Parameters (2)** You can specify a dynamic segment and a static segment
+in the same part of a pattern, without conflict, as can be seen in this and the
+previous example. The static segments take precedence over dynamic ones. For example
+a GET request to `/posts/abc/comments/new` matches both, the pattern below, and the
+one above, however since static segments take precedence the handler registered
+below will be the one executed and the one above will be left alone.
 
 ```go
 router.HandleFunc("GET", "/posts/{post_slug}/comments/new", func(c context.Context, w http.ResponseWriter, r *http.Request) {
@@ -80,12 +86,12 @@ router.HandleFunc("GET", "/posts/{post_slug}/comments/new", func(c context.Conte
 })
 ```
 	
-**Handle Catch-All Parameter** The catch-all parameter can be used to match different
-URL segments. The optional label after the "__\*__" is used as the parameter's name
-and the parameter's value will be the part of the URL that comes after the segment
-that's before the "__\*__", in this case the value of the "filename" parameter will
-contain everything that comes after "/static/" e.g. "robots.txt.", "favicon.ico", as
-well as "assets/styles/app.css", etc.
+**Handle Catch-All Parameter** You can use "__\*__" to specify a *catch-all*
+dynamic segment that matches different URL segments. The optional label after the
+"__\*__" is used as the parameter's name and the parameter's value will be the part
+of the URL that comes after the segment that's before the "__\*__", in the following
+example the value of the `"filename"` parameter will contain everything that comes after
+"/static/" e.g. "robots.txt.", "favicon.ico", as well as "assets/styles/app.css", etc.
 
 ```go
 router.HandleFunc("GET", "/static/*filename", func(c context.Context, w http.ResponseWriter, r *http.Request) {
