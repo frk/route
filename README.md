@@ -1,6 +1,6 @@
 ### route
 
-[![GoDoc](http://godoc.org/github.com/frk/route?status.png)](http://godoc.org/github.com/frk/route)  [![Coverage](http://gocover.io/_badge/github.com/frk/route?nocache=route)](http://gocover.io/github.com/frk/route)
+[![GoDoc](https://img.shields.io/badge/api-reference-blue.svg)](https://pkg.go.dev/github.com/frk/route)
 
 
 The package **route** provides an HTTP request multiplexer called **Router** that can be used as an alternative to Go's [http.ServeMux](http://golang.org/pkg/net/http/#ServeMux). This package is heavily inspired by [HttpRouter](https://github.com/julienschmidt/httprouter), [Gin Web Framework](https://github.com/gin-gonic/gin), and by Go's own [net/http](https://golang.org/pkg/net/http/) package.
