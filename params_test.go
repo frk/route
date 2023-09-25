@@ -233,7 +233,7 @@ func TestParamsTime(t *testing.T) {
 		// invalid value
 		{params: Params{{testKey, ""}}, layout: "2006-01-02", want: time.Time{}, err: &time.ParseError{"2006-01-02", "", "2006", "", ""}},
 		{params: Params{{testKey, "foo bar"}}, layout: "2006-01-02", want: time.Time{}, err: &time.ParseError{"2006-01-02", "foo bar", "2006", "foo bar", ""}},
-		{params: Params{{testKey, "08/15/1953"}}, layout: "2006-01-02", want: time.Time{}, err: &time.ParseError{"2006-01-02", "08/15/1953", "2006", "5/1953", ""}},
+		{params: Params{{testKey, "08/15/1953"}}, layout: "2006-01-02", want: time.Time{}, err: &time.ParseError{"2006-01-02", "08/15/1953", "2006", "08/15/1953", ""}},
 	}
 	for i, tt := range tests {
 		got, err := tt.params.Time(testKey, tt.layout)

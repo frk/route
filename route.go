@@ -256,5 +256,8 @@ func (c *ctx) Err() error {
 }
 
 func (c *ctx) Value(key interface{}) interface{} {
-	return c.Params
+	if key == paramsKey {
+		return c.Params
+	}
+	return nil
 }
